@@ -13,30 +13,62 @@ describe('TECS Lookout Form Automation', () => {
     ExcelManager.saveDataToExcel(personData);
   });
 
-  it('Fills out the search form and creates TECS Lookout', () => {
-    // Visit the site
-    cy.visit('/person?query=person');
-    cy.wait(3000);
-    
-    // Click on CBP Users Windows Login
-    cy.contains('CBP Users').click();
-    cy.wait(3000);
-    
-    // Fill the search form
-    cy.get('#lastName').type(personData.lastName);
-    cy.get('#firstName').type(personData.firstName);
-    cy.get('#dob').type(personData.dob);
-    
-    // Click search and wait for results
-    cy.contains('button', 'Search').click();
-    cy.wait(5000); // Wait for search results
-    
-    // Click Create TECS Lookout
-    cy.contains('Create TECS Lookout').click();
-    
-    // Wait for new page to load
-    cy.wait(8000);
+  // Replace the current login section with this more robust approach
+it('Fills out the search form and creates TECS Lookout', () => {
+  // Visit the site
+  cy.visit('/person?query=person');
+  cy.wait(5000); // Longer wait for initial load
+  
+  // More robust selector for the CBP Users button
+  cy.log('Attempting to click CBP Users button...');
+  
+  // Try multiple approaches to find and click the button
+  cy.get('body').then($body => {
+    // First, try to find button by text content
+    if ($body.find('button:contains("CBP Users")').length > 0) {
+      cy.contains('button', 'CBP Users').click({force: true});
+    } 
+    // Try with partial text match
+    else if ($body.find('button:contains("CBP")').length > 0) {
+      cy.contains('button', 'CBP').click({force: true});
+    }
+    // Try a more specific selector based on the HTML structure
+    else if ($body.find('cbp-button[class*="login-btn"]').length > 0) {
+      cy.get('cbp-button[class*="login-btn"]').click({force: true});
+    }
+    // Try by role and text content
+    else if ($body.find('[role="button"]:contains("Windows Login")').length > 0) {
+      cy.contains('[role="button"]', 'Windows Login').click({force: true});
+    }
+    // Try clicking on the specific element ID if you know it
+    else if ($body.find('#login-kerberos-btn').length > 0) {
+      cy.get('#login-kerberos-btn').click({force: true});
+    }
+    // Last resort - try to find any element containing "Windows Login"
+    else {
+      cy.contains('Windows Login').click({force: true});
+    }
   });
+  
+  // Wait after clicking the button
+  cy.wait(8000);
+  
+  // Continue with the rest of your test...
+  // Fill the search form
+  cy.get('#lastName', {timeout: 10000}).should('be.visible').type(personData.lastName);
+  cy.get('#firstName').type(personData.firstName);
+  cy.get('#dob').type(personData.dob);
+  
+  // Click search and wait for results
+  cy.contains('button', 'Search').click();
+  cy.wait(5000);
+  
+  // Click Create TECS Lookout
+  cy.contains('Create TECS Lookout').click();
+  
+  // Wait for new page to load
+  cy.wait(8000);
+});
   
   it('Fills out the TECS Lookout form with all required fields', () => {
     // ===== MAIN FORM SECTIONS =====
